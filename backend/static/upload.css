@@ -1,12 +1,14 @@
 /* General Reset */
-body, h1, form {
+body,
+h1,
+form {
     margin: 0;
     padding: 0;
 }
 
 body {
-    font-family: 'Poppins', sans-serif;
-    background: linear-gradient(135deg, #FF5733, #C70039, #900C3F, #581845);
+    font-family: "Poppins", sans-serif;
+    background: linear-gradient(135deg, #ff5733, #c70039, #900c3f, #581845);
     color: #fff;
     display: flex;
     justify-content: center;
@@ -17,9 +19,15 @@ body {
 }
 
 @keyframes backgroundAnimation {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 50% 100%; }
-    100% { background-position: 100% 50%; }
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 50% 100%;
+    }
+    100% {
+        background-position: 100% 50%;
+    }
 }
 
 h1 {
@@ -52,7 +60,9 @@ input[type="file"] {
     border-radius: 10px;
     color: #fff;
     cursor: pointer;
-    transition: transform 0.3s, background 0.3s;
+    transition:
+        transform 0.3s,
+        background 0.3s;
 }
 
 input[type="file"]:hover {
@@ -65,15 +75,17 @@ button {
     font-size: 1.2rem;
     font-weight: bold;
     color: #fff;
-    background: linear-gradient(45deg, #FFC300, #FF5733);
+    background: linear-gradient(45deg, #ffc300, #ff5733);
     border: none;
     border-radius: 25px;
     cursor: pointer;
-    transition: background 0.3s, transform 0.3s;
+    transition:
+        background 0.3s,
+        transform 0.3s;
 }
 
 button:hover {
-    background: linear-gradient(45deg, #FF5733, #C70039);
+    background: linear-gradient(45deg, #ff5733, #c70039);
     transform: scale(1.1);
 }
 
@@ -85,17 +97,21 @@ button:hover {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 a {
-    color: #FFC300;
+    color: #ffc300;
     font-weight: bold;
     text-decoration: none;
     transition: color 0.3s;
 }
 
 a:hover {
-    color: #FF5733;
+    color: #ff5733;
 }
