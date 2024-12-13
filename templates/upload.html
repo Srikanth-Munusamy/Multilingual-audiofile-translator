@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Audio</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='upload.css') }}">
+</head>
+<body>
+    <div>
+        <h1>🎧 Upload Your Audio 🎶</h1>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <label for="audio">Choose an audio file:</label>
+            <input type="file" name="audio" id="audio" accept="audio/*" required>
+            <button type="submit">Upload</button>
+        </form>
+        <div id="response"></div>
+    </div>
+    <script>
+        document.querySelector('form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+    
+            const formData = new FormData(event.target);
+            const responseDiv = document.getElementById('response');
+            
+            // Reset response content
+            responseDiv.innerHTML = '<p>Uploading and processing...</p>';
+    
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+    
+                if (!response.ok) {
+                    throw new Error('Failed to process the file.');
+                }
+    
+                const result = await response.json();
+    
+                // Display transcription and download link
+                responseDiv.innerHTML = `
+                    <p>Transcription: ${result.transcription}</p>
+                    <p>
+                        <a id="download-link" href="${result.processed_audio_url}" download>Download Processed Audio</a>
+                    </p>
+                `;
+    
+                // Automatically trigger the download
+                const downloadLink = document.getElementById('download-link');
+                downloadLink.click();
+            } catch (error) {
+                console.error('Error:', error);
+                responseDiv.textContent = 'An error occurred: ' + error.message;
+            }
+        });
+    </script>
+    
+</body>
+</html>

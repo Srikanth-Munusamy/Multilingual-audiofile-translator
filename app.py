@@ -1,24 +1,19 @@
 from flask import Flask, request, jsonify, render_template, send_file
 import os
-
+from Models.audio_translator import CustomTranslator
+#Hello
 app = Flask(__name__)
-
-# Directories for uploads and processed files
 UPLOAD_FOLDER = 'uploads'
 PROCESSED_FOLDER = 'processed'
-
-# Create directories if they don't exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(PROCESSED_FOLDER, exist_ok=True)
 
 @app.route('/')
 def upload_page():
-    # Render the HTML file
     return render_template('upload.html')
 
 @app.route('/upload', methods=['POST'])
 def upload_audio():
-    # Validate if audio file is present in the request
     if 'audio' not in request.files:
         return jsonify({"error": "No audio file provided"}), 400
 
@@ -30,11 +25,13 @@ def upload_audio():
     audio_path = os.path.join(UPLOAD_FOLDER, audio_file.filename)
     audio_file.save(audio_path)
 
-    # Simulate manipulation (renaming file)
+    # Get target language (hardcoded here for demonstration)
+    target_language = 'fr'
     manipulated_audio_path = os.path.join(PROCESSED_FOLDER, f"manipulated_{audio_file.filename}")
-    os.rename(audio_path, manipulated_audio_path)
+    Translator = CustomTranslator()
+    Translator.process_audio_chunk(input_path=audio_path, target_language=target_language, chunk_idx=10, output_path=manipulated_audio_path)
 
-    # Placeholder transcription
+    # Transcription placeholder
     transcription = "This is a sample transcription for the uploaded audio."
 
     return jsonify({
@@ -44,9 +41,10 @@ def upload_audio():
 
 @app.route('/download/<filename>', methods=['GET'])
 def download_file(filename):
-    # Serve the processed audio file for download
     processed_audio_path = os.path.join(PROCESSED_FOLDER, filename)
+    print(f"Attempting to serve file from: {processed_audio_path}")
     if os.path.exists(processed_audio_path):
+        # Correctly reference the file in the processed folder
         return send_file(processed_audio_path, as_attachment=True)
     return jsonify({"error": "File not found"}), 404
 
