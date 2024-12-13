@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Audio</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='upload.css') }}">
+</head>
+<body>
+    <div>
+        <h1>🎧 Upload Your Audio 🎶</h1>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <label for="audio">Choose an audio file:</label>
+            <input type="file" name="audio" id="audio" accept="audio/*" required>
+            <button type="submit">Upload</button>
+        </form>
+        <div id="response"></div>
+    </div>
+    <script>
+        document.querySelector('form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            const responseDiv = document.getElementById('response');
+            if (response.ok) {
+                responseDiv.innerHTML = `
+                    <p>Transcription: ${result.transcription}</p>
+                    <p><a href="${result.processed_audio_url}" download>Download Processed Audio</a></p>
+                `;
+            } else {
+                responseDiv.textContent = result.error || 'An error occurred.';
+            }
+        });
+    </script>
+</body>
+</html>
