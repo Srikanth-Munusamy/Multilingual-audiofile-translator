@@ -98,7 +98,7 @@ class CustomTranslator:
             self.input_audio_text = transcription
 
             # Generate output audio file
-            Translation_chunk_output_path = f"{output_path}_Translation_chunk{chunk_idx + 1}.mp3"
+            Translation_chunk_output_path = f"{output_path}"
 
             # Use SpeechRecognizer for translation (modify as needed)
             if target_language != "en":

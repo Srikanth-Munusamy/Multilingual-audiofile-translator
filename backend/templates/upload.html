@@ -19,22 +19,42 @@
     <script>
         document.querySelector('form').addEventListener('submit', async (event) => {
             event.preventDefault();
+    
             const formData = new FormData(event.target);
-            const response = await fetch('/upload', {
-                method: 'POST',
-                body: formData
-            });
-            const result = await response.json();
             const responseDiv = document.getElementById('response');
-            if (response.ok) {
+            
+            // Reset response content
+            responseDiv.innerHTML = '<p>Uploading and processing...</p>';
+    
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+    
+                if (!response.ok) {
+                    throw new Error('Failed to process the file.');
+                }
+    
+                const result = await response.json();
+    
+                // Display transcription and download link
                 responseDiv.innerHTML = `
                     <p>Transcription: ${result.transcription}</p>
-                    <p><a href="${result.processed_audio_url}" download>Download Processed Audio</a></p>
+                    <p>
+                        <a id="download-link" href="${result.processed_audio_url}" download>Download Processed Audio</a>
+                    </p>
                 `;
-            } else {
-                responseDiv.textContent = result.error || 'An error occurred.';
+    
+                // Automatically trigger the download
+                const downloadLink = document.getElementById('download-link');
+                downloadLink.click();
+            } catch (error) {
+                console.error('Error:', error);
+                responseDiv.textContent = 'An error occurred: ' + error.message;
             }
         });
     </script>
+    
 </body>
 </html>

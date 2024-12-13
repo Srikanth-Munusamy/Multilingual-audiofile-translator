@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, render_template, send_file
 import os
+from Models.audio_translator import CustomTranslator
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
@@ -24,10 +25,13 @@ def upload_audio():
     audio_path = os.path.join(UPLOAD_FOLDER, audio_file.filename)
     audio_file.save(audio_path)
 
-    # Placeholder for your manipulation and transcription logic
+    # Get target language (hardcoded here for demonstration)
+    target_language = 'fr'
     manipulated_audio_path = os.path.join(PROCESSED_FOLDER, f"manipulated_{audio_file.filename}")
-    os.rename(audio_path, manipulated_audio_path)  # Simulates manipulation
+    Translator = CustomTranslator()
+    Translator.process_audio_chunk(input_path=audio_path, target_language=target_language, chunk_idx=10, output_path=manipulated_audio_path)
 
+    # Transcription placeholder
     transcription = "This is a sample transcription for the uploaded audio."
 
     return jsonify({
@@ -38,7 +42,9 @@ def upload_audio():
 @app.route('/download/<filename>', methods=['GET'])
 def download_file(filename):
     processed_audio_path = os.path.join(PROCESSED_FOLDER, filename)
+    print(f"Attempting to serve file from: {processed_audio_path}")
     if os.path.exists(processed_audio_path):
+        # Correctly reference the file in the processed folder
         return send_file(processed_audio_path, as_attachment=True)
     return jsonify({"error": "File not found"}), 404
 
