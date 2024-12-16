@@ -54,78 +54,66 @@ class CustomTranslator:
             del self.model
             self.model = None
 
-    def process_audio_chunk(self, input_path, target_language, chunk_idx, output_path):
+    def process_audio(self, input_path, target_language, output_path):
         try:
             self.load_model()
 
-            # Load input audio file using librosa
+            # Load the full input audio file
             input_waveform, input_sampling_rate = librosa.load(input_path, sr=None, mono=True)
 
-            # Convert NumPy array to PyTorch tensor if needed
-            if not isinstance(input_waveform, torch.Tensor):
-                input_waveform = torch.tensor(input_waveform)
+            # Split audio into smaller chunks of ~30 seconds each
+            chunk_duration = 30  # in seconds
+            total_duration = librosa.get_duration(y=input_waveform, sr=input_sampling_rate)
+            chunk_size = chunk_duration * input_sampling_rate
 
-            forced_decoder_ids = self.processor.get_decoder_prompt_ids(language=target_language, task="translate")
+            all_translations = []
+            for i in range(0, len(input_waveform), chunk_size):
+                chunk = input_waveform[i:i + chunk_size]
+                if len(chunk) == 0:
+                    break
 
-            # Ensure the input audio has a proper frame rate
-            if input_sampling_rate != 16000:
-                resampler = torchaudio.transforms.Resample(orig_freq=input_sampling_rate, new_freq=16000)
-                input_waveform = resampler(input_waveform)
+                # Resample to 16kHz if needed
+                if input_sampling_rate != 16000:
+                    resampler = torchaudio.transforms.Resample(orig_freq=input_sampling_rate, new_freq=16000)
+                    chunk = resampler(torch.tensor(chunk)).numpy()
 
-            # Process the input audio with the processor
-            input_features = self.processor(input_waveform.numpy(), sampling_rate=16000, return_tensors="pt")
+                # Process audio chunk
+                input_features = self.processor(chunk, sampling_rate=16000, return_tensors="pt")
+                device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+                input_features = input_features.to(device)
 
-            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            input_features = input_features.to(device)
+                # Generate transcription
+                forced_decoder_ids = self.processor.get_decoder_prompt_ids(language=target_language, task="translate")
+                predicted_ids = self.model.generate(input_features["input_features"], forced_decoder_ids=forced_decoder_ids)
+                transcription = self.processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
 
+                # Clean duplicate words
+                words = transcription.split()
+                cleaned_transcription = ' '.join([words[0]] + [word for j, word in enumerate(words[1:]) if word != words[j]])
 
-            # Generate token ids
-            predicted_ids = self.model.generate(input_features["input_features"], forced_decoder_ids=forced_decoder_ids)
+                # Translate chunk if target language is not English
+                if target_language != "en":
+                    translator = SentenceTranslator(src="en", dst=target_language)
+                    translated_text = translator(cleaned_transcription)
+                    all_translations.append(translated_text)
+                else:
+                    all_translations.append(cleaned_transcription)
 
-            # Decode token ids to text
-            transcription = self.processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
+            # Combine all translated chunks into a single text
+            final_translation = ' '.join(all_translations)
 
-            #fix a bug: Text Validation check if we have duplicate successive words
-            words = transcription.split()
-            cleaned_words = [words[0]]
+            # Generate a single MP3 file with the final translated text
+            self.generate_audio(final_translation, output_path, target_language)
 
-            for word in words[1:]:
-                if word != cleaned_words[-1]:
-                    cleaned_words.append(word)
-
-            cleaned_str = ' '.join(cleaned_words)
-            transcription = cleaned_str
-            self.input_audio_text = transcription
-
-            # Generate output audio file
-            Translation_chunk_output_path = f"{output_path}"
-
-            # Use SpeechRecognizer for translation (modify as needed)
-            if target_language != "en":
-                translator = SentenceTranslator(src="en", dst=target_language)
-                translated_text = translator(transcription)
-                self.translated_text = translated_text
-                # Generate final audio output from translated text
-                self.generate_audio(translated_text, Translation_chunk_output_path, target_language)
-                logging.info(f"Processing successful. Translated text: {translated_text}")
-                return translated_text
-            else:
-                self.translated_text = transcription
-                self.generate_audio(transcription, Translation_chunk_output_path, target_language)
-                logging.info(f"Processing successful. Translated text: {transcription}")
-                return transcription
-
-            # Log success
-            logging.info(f"Translation successful for {input_path}. Translated text: {transcription}")
+            return final_translation
 
         except Exception as e:
-            # Log errors
             logging.error(f"Error processing audio: {e}")
-            raise  # Re-raise the exception
-
+            raise
         finally:
-            # Ensure model is unloaded and memory is cleared even if an exception occurs
             self.unload_model()
+
+
 
     def get_input_audio_text(self):
         return self.input_audio_text
