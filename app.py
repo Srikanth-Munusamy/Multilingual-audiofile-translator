@@ -26,7 +26,12 @@ def upload_audio():
     audio_file.save(audio_path)
 
     # Target language
-    target_language = 'fr'
+    input_language = request.form.get('input_language')
+    target_language = request.form.get('target_language')
+    if not input_language or not target_language:
+            return jsonify({'error': 'Language selection is missing'}), 400
+    
+    
     output_audio_path = os.path.join(PROCESSED_FOLDER, f"translated_{audio_file.filename}")
     Translator = CustomTranslator()
     translated_text = Translator.process_audio(input_path=audio_path, target_language=target_language, output_path=output_audio_path)
