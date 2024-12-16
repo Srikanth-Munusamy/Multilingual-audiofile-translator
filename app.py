@@ -25,19 +25,18 @@ def upload_audio():
     audio_path = os.path.join(UPLOAD_FOLDER, audio_file.filename)
     audio_file.save(audio_path)
 
-    # Get target language (hardcoded here for demonstration)
+    # Target language
     target_language = 'fr'
-    manipulated_audio_path = os.path.join(PROCESSED_FOLDER, f"manipulated_{audio_file.filename}")
+    output_audio_path = os.path.join(PROCESSED_FOLDER, f"translated_{audio_file.filename}")
     Translator = CustomTranslator()
-    Translator.process_audio_chunk(input_path=audio_path, target_language=target_language, chunk_idx=10, output_path=manipulated_audio_path)
-
-    # Transcription placeholder
-    transcription = "This is a sample transcription for the uploaded audio."
+    translated_text = Translator.process_audio(input_path=audio_path, target_language=target_language, output_path=output_audio_path)
 
     return jsonify({
-        "transcription": transcription,
-        "processed_audio_url": f"/download/{os.path.basename(manipulated_audio_path)}"
+        "transcription": translated_text,
+        "processed_audio_url": f"/download/{os.path.basename(output_audio_path)}"
     })
+
+
 
 @app.route('/download/<filename>', methods=['GET'])
 def download_file(filename):
